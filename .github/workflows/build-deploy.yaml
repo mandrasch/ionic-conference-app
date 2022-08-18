@@ -1,0 +1,34 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+    # Sustainability: Don't trigger build for updated README
+    paths-ignore:
+      - "**/README.md"
+    # Allows you to run this workflow manually from the Actions tab.
+    workflow_dispatch:
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+      - name: Use Node LTS
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16" # lts
+
+      # This build runs with path prefix for github pages (hosted on subdirectory),
+      # for example https://<USER>.github.io/<REPO-NAME>/
+      # See: https://stackoverflow.com/a/54608743/809939
+      # See: https://github.com/ionic-team/ionic-cli/issues/3600#issuecomment-436798575
+      - name: Install and Build for Github Pages 🔧
+        run: |
+          npm ci
+          npx ionic build --prod -- --base-href "${{ github.event.repository.name }}"
+      - name: Deploy to Github Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@3.6.2
+        with:
+          branch: gh-pages
+          folder: www/ #the static site folder
